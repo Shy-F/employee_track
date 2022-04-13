@@ -17,11 +17,14 @@
   "bugs": {
     "url": ""
   },
-"homepage": "",
-"dependencies": {
-  "console.table": "^0.10.0",
-  "dotenv": "^8.2.0",
-  "inquirer": "^7.1.0",
-  "mysql2": "^2.1.0"
+  "homepage": "",
+  "dependencies": {
+    "chalk": "^3.0.0",
+    "console.table": "^0.10.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.3",
+    "inquirer": "^7.1.0",
+    "mysql2": "^2.3.3",
+    "sequelize": "^6.19.0"
   }
 }
