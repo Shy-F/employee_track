@@ -1,10 +1,7 @@
 const inquirer = require('inquirer');
-const mysql = require('mysql');
-const chalk = require('chalk');
-const Connection = require('mysql2/typings/mysql/lib/Connection');
+const mysql = require('mysql2');
 require('console.table');
 const db = require('./db/connection');
-const { ConnectionRefusedError } = require('sequelize/types');
 
 
 function promptUser() {
@@ -19,8 +16,9 @@ function promptUser() {
                 'Add a department',
                 'Add a Role',
                 'Add an employee',
-                'Update an employee role',]   
-    }
+                'Update an employee role',
+                'Exit',],
+    },
   ])
     .then((res) => {
       switch (res.options) {
@@ -45,76 +43,90 @@ function promptUser() {
         case 'Update an employee role':
           updateEmployeeRole();
           break;
+        case 'Exit':
+          exit();
+        default:
+          exit();
       }
     });
 }
 
-const viewDepartments = () => {
-  query = `SELECT department_name AS 'Departments' FROM departments`;
-  Connection.query(query, (err, results) => {
-    if (err) throw err;
+const addRolePrompt = [
+  {
+    type: 'input',
+    name: 'role',
+    message: 'What is the new job title',
+  },
+  {
+    type: 'input',
+    name: 'salary',
+    message: 'What is the salary for this role?'
+  },
+  {
+    type: 'input',
+    name: 'dept',
+    message: 'Select department for this role',
+  }
+];
 
-    console.log('');
-    console.table(chalk.blue('Viewing all departments'), results)
+const addEmployeePrompt = [
+  {
+    type: 'input',
+    name: 'fn',
+    message: 'What is employee first name?'
+  },
+  {
+    type: 'input',
+    name: 'ln',
+    message: 'What is employee last name?'
+  }
+];
+
+function viewDepartments() {
+  const query = 'SECLECT * FROM departments';
+  db.query(query, (err, res) => {
+    if (err) throw err;
+    console.table(res);
     promptUser();
-  })
+  });
 }
 
-const viewRoles = () => {
-  query = `SELECT title AS 'Title' FROM roles`;
-  Connection.query(query, (err, results) => {
+function viewRoles() {
+  const query = 'SELECT * FROM roles';
+  db.query(query, (err, res) => {
     if (err) throw err;
-
-    console.log(' ');
-    console.table(chalk.blue('Viewing all roles'), results);
+    console.table(res);
     promptUser();
-  })
+  });
 }
 
-const viewEmployees = () => {
-  query = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary AS role FROM employee 
-  LEFT JOIN role ON employee.role_id = role.id
-  LEFT JOIN department ON role.department_id = department.id`;
-
-  Connection.query(query, (err, results) => {
-    if (err) throw err;
-
-    console.log(' ');
-    console.table(chalk.blue('Viewing all employees'), results);
-    promptUser();
-  })
+function viewEmployees() {
+  const query = 'SELECT employees.id, employees.first_name, employees.last_name, roles.title, dept_name AS department, roles.salary, CONCAT(manager.first_name, " ", manager.last_name) AS manager from employees LEFT JOIN roles on employees.role_id = roles.id LEFT JOIN departments dept on roles.department_id = dept.id LEFT JOIN employees manager on manager.id = employees.manager_id';
+db.query(query, (err, res) => {
+  if (err) throw err;
+  console.table(res);
+  promptUser();
+});
 }
 
-const addDepartment = () => {
-  query = `SELECT department_name AS 'Departments' FROM departments`;
-  Connection.query(query, (err, results) => {
-    if (err) throw err;
-
-    console.log(' ');
-    console.table(chalk.blue('Departments'), results);
-  
-  inquirer.prompt([
+function addDepartment() {
+  const query = 'INSERT INTO departments (dept_name) VALUES (?)';
+  inquirer.prompt(
     {
       type: 'input',
       name: 'addDepartment',
       message: 'What is the name of the new department?'
-    }
-  ])
-    .then(choice => {
-      Connection.query(`INSERT INTO departments(department_name) VALUES( ? )`, choice.addDepartment)
-      promptUser();
-      })
     })
+    .then((res) => {
+     db.query(query, res.addDepartment, (err, res) => {
+       if (err) throw err;
+       console.log('New department added');
+      promptUser();
+      });
+    });
 }
 
-const addRole = () => {
-  query = `SELECT * FROM roles; SELECT * FROM departments`
-  Connection.query(query, (err, results) => {
-    if (err) throw err;
-
-    console.log(' ');
-    console.table(chalk.blue('Roles'), results);
-  
+function addRole() {
   inquirer.prompt([
     {
       type: 'input',
